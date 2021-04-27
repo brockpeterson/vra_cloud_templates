@@ -1,0 +1,65 @@
+formatVersion: 1
+inputs:
+  OperatingSystem:
+    type: string
+    enum:
+      - Windows
+      - Linux - Ubuntu18
+    title: Operating System
+    description: Operating System Input
+    default: Windows
+  vCPU:
+    type: integer
+    enum:
+      - 1
+      - 2
+      - 3
+      - 4
+    title: vCPU
+    description: vCPU Input
+    default: 1
+    minimum: 1
+    maximum: 4
+  Memory:
+    type: integer
+    enum:
+      - 2000
+      - 4000
+      - 8000
+      - 16000
+    title: Memory
+    description: Memory Input
+    default: 2000
+    minimum: 2000
+    maximum: 16000
+resources:
+  Cloud_vSphere_Disk_1:
+    type: Cloud.vSphere.Disk
+    metadata:
+      layoutPosition:
+        - 0
+        - 0
+    properties:
+      capacityGb: 1
+  Cloud_vSphere_Machine_1:
+    type: Cloud.vSphere.Machine
+    metadata:
+      layoutPosition:
+        - 0
+        - 1
+    properties:
+      image: '${input.OperatingSystem}'
+      cpuCount: '${input.vCPU}'
+      totalMemoryMB: '${input.Memory}'
+      attachedDisks:
+        - source: '${resource.Cloud_vSphere_Disk_1.id}'
+      networks:
+        - network: '${resource.Cloud_NSX_Network_1.id}'
+  Cloud_NSX_Network_1:
+    type: Cloud.NSX.Network
+    metadata:
+      layoutPosition:
+        - 1
+        - 0
+    properties:
+      networkType: existing
