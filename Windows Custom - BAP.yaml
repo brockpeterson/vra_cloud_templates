@@ -1,0 +1,127 @@
+formatVersion: 1
+inputs:
+  os:
+    type: string
+    title: OS
+    description: OS
+    default: Windows 2012 R2
+    enum:
+      - Windows 2012 R2
+      - Windows 2016
+  ip_address:
+    type: string
+    title: IP address
+    description: IP Address for VM
+    default: 10.216.178.215
+  hostname:
+    type: string
+    title: VM Hostname
+    description: VM Hostname
+    default: bap111
+  password:
+    type: string
+    title: Administrator Password
+    description: Administrator Password
+    default: VMware1!
+  vcpu:
+    type: integer
+    title: vCPU
+    description: vCPU
+    default: 2
+    minimum: 2
+    maximum: 8
+  memory:
+    type: integer
+    title: Memory MB
+    description: Memory MB
+    default: 4096
+    minimum: 4096
+    maximum: 8192
+  c_drive:
+    type: integer
+    title: C Drive GB
+    description: C drive size in GB
+    default: 20
+  e_drive:
+    type: integer
+    title: E Drive GB (0 if NA)
+    description: E drive size in GB
+    default: 40
+  f_drive:
+    type: integer
+    title: F Drive GB (0 if NA)
+    description: F drive size in GB
+    default: 40
+  vcenter_folder:
+    type: string
+    title: vCenter Folder
+    description: vCenter Folder the VM will be put in
+    default: vra_vm_folder
+  customization_spec:
+    type: string
+    title: Customization Spec
+    description: Customization Spec to run
+    default: Rename Windows VM
+    enum:
+      - Rename Windows VM
+      - Rename Windows VM and add to AD TVS
+      - Rename Windows VM, add to AD TVS, and set Administrator Password
+resources:
+  Network:
+    type: Cloud.Network
+    metadata:
+      layoutPosition:
+        - 0
+        - 0
+    properties:
+      networkType: existing
+      constraints:
+        - tag: network:bap
+  Cloud_vSphere_Machine_1:
+    type: Cloud.vSphere.Machine
+    metadata:
+      layoutPosition:
+        - 1
+        - 0
+    properties:
+      folderName: ${input.vcenter_folder}
+      image: ${input.os}
+      name: ${input.hostname}
+      remoteAccess:
+        authentication: usernamePassword
+        username: Administrator
+        password: ${input.password}
+      cpuCount: ${input.vcpu}
+      totalMemoryMB: ${input.memory}
+      customizationSpec: ${input.customization_spec}
+      networks:
+        - network: ${resource.Network.id}
+          assignment: static
+          address: ${input.ip_address}
+      attachedDisks: ${map_to_object(resource.Cloud_vSphere_Disk_1[*].id + resource.Cloud_vSphere_Disk_2[*].id + resource.Cloud_vSphere_Disk_3[*].id , "source")}
+  Cloud_vSphere_Disk_1:
+    type: Cloud.vSphere.Disk
+    metadata:
+      layoutPosition:
+        - 1
+        - 1
+    properties:
+      capacityGb: ${input.c_drive}
+  Cloud_vSphere_Disk_2:
+    type: Cloud.vSphere.Disk
+    metadata:
+      layoutPosition:
+        - 1
+        - 2
+    properties:
+      capacityGb: ${input.e_drive}
+      count: '${input.e_drive == 0 ? 0 : 1 }'
+  Cloud_vSphere_Disk_3:
+    type: Cloud.vSphere.Disk
+    metadata:
+      layoutPosition:
+        - 1
+        - 3
+    properties:
+      capacityGb: ${input.f_drive}
+      count: '${input.f_drive == 0 ? 0: 1}'
